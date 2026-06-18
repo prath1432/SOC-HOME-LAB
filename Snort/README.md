@@ -21,33 +21,33 @@ sudo nano /etc/snort/rules/local.rules
 ### A. Ping Scan (ICMP)
 Detection Mode:
 ```
-alert icmp any any -> $HOME_NET any (msg:"IDS: ICMP Ping Detected"; sid:100001; rev:1;)
+alert icmp any any -> any any (msg:"ICMP Ping Detected"; sid:100001; rev:1;)
 ```
 
 Prevention Mode:
 ```
-drop icmp any any -> $HOME_NET any (msg:"IPS: ICMP Ping Blocked"; sid:200001; rev:1;)
+drop icmp any any -> any any (msg:"ICMP Request Blocked"; sid:100007; rev:1;)
 ```
 
 ### B. SSH Brute Force
 Detection Mode:
 ```
-alert tcp any any -> $HOME_NET 22 (msg:"IDS: SSH Brute Force Attempt"; flow:stateless; detection_filter:track by_src, count 5, seconds 60; sid:100002; rev:1;)
+alert tcp any any -> any 22 (msg:"SSH Brute Force Detect"; sid:100003; rev:1;)
 ```
 
 Prevention Mode:
 ```
-drop tcp any any -> $HOME_NET 22 (msg:"IPS: SSH Brute Force Blocked"; flow:stateless; detection_filter:track by_src, count 5, seconds 60; sid:200002; rev:1;)
+drop tcp any any -> any 22 (msg:"SSH Brute Force Attack Blocked"; sid:100009; rev:1;)
 ```
 
-### C. Nmap Scan (XMAS Scan)
+### C. Nmap Scan
 Detection Mode:
 ```
-alert tcp any any -> $HOME_NET any (msg:"IDS: Nmap XMAS Scan Detected"; flags:F,P,U; sid:100003; rev:1;)
+alert tcp any any -> any any (msg:"Nmap Scan Detected"; sid:100002; rev:1;)
 ```
 Prevention Mode:
 ```
-drop tcp any any -> $HOME_NET any (msg:"IPS: Nmap XMAS Scan Blocked"; flags:F,P,U; si
+drop tcp any any -> any any (msg:"Nmap Scan Blocked"; flags:S; window:1024; threshold:type threshold, track by_src, count 5, seconds 10; sid:100008; rev:1;)
 ```
 
 ## 3. Execution & Testing
@@ -93,7 +93,12 @@ Command to view live logs:
 sudo tail -f /var/log/snort/alert
 ```
 
-
+> **💡 SOC Analyst Note: Understanding Network Variables**
+> * **`$HOME_NET`**: Your defended internal network (e.g., your local IP subnet). 
+> * **`$EXTERNAL_NET`**: The untrusted outside world / Internet (Best practice is defining this as `!$HOME_NET`).
+> * **`any`**: The universal wildcard (matches every IP address).
+>
+> **Best Practice:** Always specify traffic direction to reduce false positives and save CPU processing power. Use `$EXTERNAL_NET any -> $HOME_NET <port>` to detect inbound attacks, and `$HOME_NET any -> $EXTERNAL_NET <port>` to detect outbound malware callbacks. Avoid using `any -> any` unless absolutely necessary.
 
 
 
