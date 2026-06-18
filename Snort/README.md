@@ -9,7 +9,7 @@ sudo apt install snort -y
 
 (During installation, you will be prompted to enter your network interface and CIDR block, e.g., 192.168.1.0/24)
 
-2. Configuration
+## 2. Configuration
 Backup the original configuration file before making changes:
 
 Bash
