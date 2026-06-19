@@ -11,7 +11,7 @@ sudo bash ./wazuh-install.sh -a
 #(Important: When the script finishes, it will print out the Admin Username and Password in the terminal. Copy these down to log into the web dashboard!)
 
 ```
-### B. Install Wazuh Agent (Machine 2 / Target Machine)
+### B. Install Wazuh Agent (Machine 2 / Target Machine) - (Part A)
 Run these commands on your Target Machine to install the agent and connect it to your SOC Server. Replace <SOC_SERVER_IP> with the actual IP address of Machine 1.
 
 ```
@@ -31,6 +31,23 @@ sudo systemctl daemon-reload
 sudo systemctl enable wazuh-agent
 sudo systemctl start wazuh-agent
 ```
+### B. Install & Deploy Wazuh Agent (Via Manager Command) - (Part B)
+The easiest way to add an agent is by generating the installation command directly from the Wazuh Manager. 
+
+1. Log into your **Wazuh Dashboard** (`https://<SOC_SERVER_IP>`).
+2. Click the upper-left menu icon and go to **Wazuh** ➔ **Agents** ➔ **Deploy new agent**.
+3. Select your Target Machine's OS parameters:
+   * **Operating System**: Linux
+   * **Architecture**: x86_64 or aarch64
+   * **Linux Distribution**: Ubuntu
+4. Enter your **Wazuh Manager IP** address in the field provided.
+5. Assign an optional agent name (e.g., `Ubuntu-Target`).
+6. The dashboard will automatically generate a single, unified command string. **Copy that command** and paste it into your Target Machine's terminal. It will look similar to this:
+
+```bash
+wget [https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.x.x-1_amd64.deb](https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_4.x.x-1_amd64.deb) && sudo WAZUH_MANAGER="192.168.x.10" WAZUH_AGENT_NAME="Ubuntu-Target" dpkg -i wazuh-agent_4.x.x-1_amd64.deb
+```
+
 ### C. Verify the Connection
 To verify the agent successfully connected to the manager, run this command on your Target Machine:
 ```
@@ -40,7 +57,7 @@ sudo grep -i "Connected to" /var/ossec/logs/ossec.log
 ```
 
 
-## 2. Detection Use Cases (Endpoint Telemetry)
+## 2. Detection Use Cases 
 Wazuh natively parses Ubuntu's /var/log/auth.log and /var/log/syslog to detect malicious endpoint behavior out-of-the-box. We will enhance this by configuring custom monitoring.
 
 ### A. File Integrity Monitoring (FIM)
@@ -70,7 +87,7 @@ Restart the Wazuh Manager to apply the changes:
 sudo systemctl restart wazuh-manager
 ```
 
-## 3. Execution & Testing (Detailed Attack Simulations)
+## 3. Execution & Testing 
 To validate the EDR capabilities, we will simulate three distinct attack vectors. For the network-based attack (SSH), execute the commands from a separate Attacker Machine. For the host-based attacks (FIM and User Creation), execute them directly on the Target Machine.
 
 ### A. Testing File Integrity Monitoring (FIM)
@@ -126,7 +143,20 @@ From your external Attacker Machine, launch a credential stuffing attack against
 ```Bash
 hydra -l root -P passwords.txt ssh://<TARGET_IP>
 ```
-2. SOC Verification (Wazuh Dashboard):
+
+2.  Critical Prerequisite for SSH Detection:
+> Ensure that the Wazuh Agent's local configuration file (`/var/ossec/etc/ossec.conf`) is explicitly told to read your system's authentication logs. If this block is missing or commented out, the agent will not send SSH telemetry to the manager.
+>
+> Open `/var/ossec/etc/ossec.conf` on the Target Machine and verify this block is present:
+> ```
+> <localfile>
+>   <log_format>syslog</log_format>
+>   <location>/var/log/auth.log</location>
+> </localfile>
+> ```
+> *(Note: If you had to add this block manually, you must restart the agent using `sudo systemctl restart wazuh-agent` to apply the changes).
+
+3. SOC Verification (Wazuh Dashboard):
 ```
 #Log into the Wazuh Web UI.
 #Navigate to Modules ➔ Security events.
