@@ -79,11 +79,13 @@ We will simulate an attacker dropping a malicious configuration file or modifyin
 
 ```Bash
 # Create a fake backdoor configuration file
-sudo touch /home/jack
+sudo nano /home/jack/Desktop/test.exe
+
+This is Test File for FIM in wazuh.
 ```
 ```
 # Modify the file to simulate tampering
-sudo bash -c 'echo "bind_shell=true" > /etc/system_backdoor.conf'
+This is Test File modified for FIM in wazuh.
 ```
 
 2. SOC Verification (Wazuh Dashboard):
@@ -92,6 +94,9 @@ sudo bash -c 'echo "bind_shell=true" > /etc/system_backdoor.conf'
 #Navigate to Modules ➔ Security events.
 #In the search bar, add the filter: rule.id: 550 (or rule.group: syscheck).
 #You will see the visual alerts for file creation and modification. Expand the log to see exactly what text was changed.
+Rule.id 554 - File Added
+Rule.id 553 - File Deleted
+Rule.id 550 - File Modified 
 ```
 
 ### B. Testing Unauthorized User Creation
@@ -99,8 +104,11 @@ sudo bash -c 'echo "bind_shell=true" > /etc/system_backdoor.conf'
 Attackers often create local accounts to establish persistence. Run this on the Target Machine to simulate a rogue administrator adding an account:
 
 ```Bash
-# Add a new user without prompting for interactive details
-sudo useradd -m -s /bin/bash rogue_admin
+# Add a new user.
+sudo useradd test_user
+
+# Delete a new user.
+sudo useradd test_user
 ```
 2. SOC Verification (Wazuh Dashboard):
 ```
@@ -108,6 +116,8 @@ sudo useradd -m -s /bin/bash rogue_admin
 #Navigate to Modules ➔ Security events.
 #Add the filter: rule.id: 5902 (New user added to system).
 #Expand the event to see the decoded Linux system log showing the exact time and host where rogue_admin was created.
+Rule.id 5902 - New user added in system.
+Rule.id 5903 - New user deleted from system.
 ```
 ### C. Testing SSH Brute Force (Detection)
 1. The Simulation:
