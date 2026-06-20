@@ -1,4 +1,4 @@
-## 1. The Snort File
+## Snort Different Rules
 ```
 # ===============================================================================
 # SOC HOME LAB: SNORT CUSTOM DETECTION RULES
