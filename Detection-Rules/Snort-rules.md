@@ -1,6 +1,4 @@
 ## 1. The Snort File
-Create this file: Detection-Rules/snort_local.rules
-
 ```
 # ===============================================================================
 # SOC HOME LAB: SNORT CUSTOM DETECTION RULES
