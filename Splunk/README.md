@@ -111,3 +111,63 @@ To verify or manually add data inputs, navigate through the Splunk console using
 #Click on Files & directories.
 #Click the New Local File & Directory button and configure the following paths:
 ```
+
+## 3. Threat Detection via SPL (Splunk Processing Language)
+Once logs are indexed, a SOC Analyst uses SPL to hunt for threats and build automated detection alerts. Here are the precise queries matching our lab scenarios:
+
+### A. Detecting SSH Brute Force
+This query monitors authentication logs for a high volume of failed login attempts from a single source IP.
+
+```
+index="main" sourcetype=linux_secure "failed password" 
+| stats count by src_ip, user 
+| where count > 5
+```
+### B. Detecting New User Creation
+This query tracks whenever an account creation tool is executed or a new user structure is committed to the local system database.
+```
+index="main "sourcetype=linux_secure ("useradd" OR "adduser" OR "new user")
+| table _time, host, user, script, message
+```
+
+## 4. Execution, Testing & Dashboard Verification
+To prove our SIEM is working correctly, we run attack simulations and verify how they present inside the Splunk console.
+
+### A. Simulating the Telemetry Generation
+Run your attack scripts from your external attacker machine (e.g., launching an SSH brute force using Hydra or running an Nmap scan against the target).
+
+```Bash
+# Attacker Action Example
+hydra -l root -P passwords.txt ssh://<TARGET_IP>
+```
+### B. Verifying Raw Events in Splunk
+```
+#Open the Splunk Web UI and go to the Search & Reporting app.
+#Set the time picker to Presets ➔ Real-time (1 minute window) or Last 15 minutes.
+
+```
+Run the following search to verify logs are updating in real time:
+```
+index=main sourcetype=linux_secure
+```
+## 5. Building the L1 SOC Analyst Dashboard
+Visualizing events allows a SOC Analyst to spot trends and coordinate incident response quickly.
+```
+[Attacker Machine] ---> [Target Sensors: Snort/Wazuh] ---> [Splunk Indexer] ---> [SOC Analyst Dashboard Visuals]
+```
+```
+Step-by-Step Dashboard Creation:
+1) Run any of the SPL detection queries from Section 3 (e.g., the SSH Brute Force query).
+
+2) Click the Visualization tab below the search bar and select Pie Chart or Bar Chart.
+
+3) Click Save As in the top right corner and select New Dashboard.
+
+4) Configure the dashboard settings:
+   - Dashboard Title: L1 SOC Monitoring Dashboard
+   - Permissions: Shared in App
+
+5) Click Save to Dashboard.
+
+6) Repeat this process for your User Creation and Network Scan queries, selecting Add to Existing Dashboard to build a single, comprehensive pane of glass.
+```
